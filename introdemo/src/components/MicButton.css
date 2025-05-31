@@ -1,0 +1,141 @@
+.cat-button {
+    /* Keep it square */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  display: inline-block;
+}
+
+.cat-image {
+  width: 250px; /* adjust size */
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+/* Hover effect */
+.cat-button:hover .cat-image {
+  transform: scale(1.1);
+}
+
+/* Animation/effect when recording */
+.cat-button.listening {
+  animation: pulse 1.5s infinite;
+  border-radius: 50%;
+  box-shadow: 0 0 15px 5px #ff4081;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px 5px #ff4081;
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 25px 10px #ff4081;
+  }
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #fef6e4;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.cat-section {
+  position: relative;
+  display: inline-block;
+}
+
+.speech-bubble {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 600px;
+  width: 80vw;
+  background: #fffbea;
+  border: 3px solid #555;
+  border-radius: 20px;
+  padding: 20px 25px;
+  font-size: 1.1rem;
+  font-family: 'Comic Sans MS', 'Segoe UI', sans-serif;
+  color: #333;
+  text-align: left;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
+  word-wrap: break-word;
+
+  /* Bubble Tail */
+  position: relative;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border: 15px solid transparent;
+  border-top-color: #fffbea;
+  border-bottom: 0;
+  margin-left: -15px;
+  filter: drop-shadow(0 -1px 1px rgba(0,0,0,0.2));
+}
+
+.title {
+  font-family: 'Patrick Hand', 'Comic Sans MS', 'Segoe UI', cursive;
+  font-size: 2rem;
+  margin-top: 30px;
+  text-align: center;
+  color: #8e44ad; /* A warm pink */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Add these styles to your existing CSS */
+
+.language-toggle {
+  position: absolute;
+  bottom: calc(100% + 15px); /* Position above speech bubble */
+  left: 50%;
+  transform: translateX(-50%);
+  background: #8e44ad; /* Matching your title color */
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-family: 'Patrick Hand', 'Comic Sans MS', cursive;
+  cursor: pointer;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.language-toggle:hover {
+  background: #9b59b6;
+  transform: translateX(-50%) scale(1.05);
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.25);
+}
+
+.language-toggle:active {
+  transform: translateX(-50%) scale(0.98);
+}
+
+/* Adjust speech bubble positioning to account for toggle button */
+.speech-bubble {
+  bottom: calc(100% + 50px); /* Moved down to make space for toggle */
+}
+
+/* Add this if you want the toggle to appear only after recording */
+.cat-section.has-translation .language-toggle {
+  display: block;
+}
