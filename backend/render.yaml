@@ -5,13 +5,11 @@ services:
     plan: free
     buildCommand: |
       apt-get update && \
-      apt-get install -y ffmpeg && \  # Needed for audio processing
+      apt-get install -y ffmpeg && \
       pip install -r requirements.txt
-    startCommand: gunicorn --worker-tmp-dir /dev/shm whisper_test:app
+    startCommand: gunicorn --worker-tmp-dir /dev/shm --bind 0.0.0.0:$PORT whisper_test:app
     envVars:
-      - key: PORT
-        value: 5000
       - key: FLASK_APP
         value: whisper_test.py
       - key: WHISPER_MODEL
-        value: base  # Use "tiny" or "small" if you get memory errors
+        value: base

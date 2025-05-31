@@ -23,6 +23,7 @@ const App = () => {
     const response = await fetch(`${API_BASE_URL}/transcribe`, {
       method: "POST",
       body: formData,
+      mode: 'cors'
     });
 
     const data = await response.json();
