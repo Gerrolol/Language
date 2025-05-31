@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: whisper-backend
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: gunicorn whisper_test:app
+    envVars:
+      - key: PORT
+        value: 5000
