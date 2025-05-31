@@ -9,9 +9,7 @@ const App = () => {
   const [error, setError] = useState(null);
 
   // Configure API URL based on environment
-  const API_BASE_URL = import.meta.env.PROD
-    ? 'https://translatethai.onrender.com'  // Replace with your deployed backend URL
-    : 'http://localhost:5000';
+  const API_BASE_URL = 'https://translatethai.onrender.com'  // Replace with your deployed backend URL
 
   const handleTranscription = async (audioBlob) => {
   setError(null);

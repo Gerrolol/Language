@@ -13,7 +13,7 @@ CORS(app, resources={
         "origins": [
             "http://localhost:3000",
             "http://localhost:5173",
-            "https://your-frontend.vercel.app"
+            "https://language-azw3.onrender.com"
         ]
     }
 })
