@@ -26,7 +26,7 @@ def get_model():
     global model
     if model is None:
         print("Loading Whisper model...")
-        model = whisper.load_model("base")
+        model = whisper.load_model("tiny")
     return model
 
 @app.route('/transcribe', methods=['POST', 'OPTIONS'])
