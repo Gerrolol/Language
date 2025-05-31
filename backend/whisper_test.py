@@ -8,15 +8,8 @@ from pathlib import Path
 import atexit
 
 app = Flask(__name__)
-CORS(app, resources={
-    r"/*": {
-        "origins": [
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "https://language-azw3.onrender.com"
-        ]
-    }
-})
+CORS(app, resources={r"/transcribe": {"origins": "https://language-azw3.onrender.com"}}, supports_credentials=True)
+
 
 AUDIO_TEMP_DIR = Path(__file__).parent / "audio_temp"
 AUDIO_TEMP_DIR.mkdir(exist_ok=True)
