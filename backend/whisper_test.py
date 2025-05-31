@@ -1,15 +1,11 @@
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import whisper
-import sounddevice as sd
-import numpy as np
-import scipy.io.wavfile
-import threading
-import os
 from googletrans import Translator
 import tempfile
-import atexit
+import os
 from pathlib import Path
+import atexit
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -21,13 +17,6 @@ CORS(app, resources={
         ]
     }
 })
-
-fs = 44100
-channels = 1
-
-audio_buffer = []
-recording = False
-stream = None  # GLOBAL stream to keep audio stream alive
 
 AUDIO_TEMP_DIR = Path(__file__).parent / "audio_temp"
 AUDIO_TEMP_DIR.mkdir(exist_ok=True)
@@ -41,86 +30,66 @@ def get_model():
         model = whisper.load_model("base")
     return model
 
-def audio_callback(indata, frames, time, status):
-    global audio_buffer, recording
-    if recording:
-        audio_buffer.append(indata.copy())
+@app.route('/transcribe', methods=['POST'])
+def transcribe_audio():
+    if 'audio' not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
 
-@app.route('/start', methods=['GET'])
-def start_recording():
-    global recording, audio_buffer, stream
-    if recording:
-        return jsonify({"error": "Already recording"}), 400
+    file = request.files['audio']
+    if file.filename == '':
+        return jsonify({"error": "Empty filename"}), 400
 
-    audio_buffer = []
-    recording = True
-
+    temp_path = None
     try:
-        if stream is None:
-            stream = sd.InputStream(
-                samplerate=fs,
-                channels=channels,
-                callback=audio_callback,
-                blocksize=1024
-            )
-            stream.start()
-        print("Recording started")
-        return jsonify({"status": "recording started"})
-    except Exception as e:
-        recording = False
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/stop', methods=['GET'])
-def stop_recording():
-    global recording, audio_buffer, stream
-    if not recording:
-        return jsonify({"error": "Not recording"}), 400
-
-    recording = False
-
-    try:
-        if stream is not None:
-            stream.stop()
-            stream.close()
-            stream = None
-
-        if not audio_buffer:
-            return jsonify({"error": "No audio recorded"}), 400
-
-        audio_data = np.concatenate(audio_buffer, axis=0)
-
-        # Save to temp wav file
-        with tempfile.NamedTemporaryFile(
-            dir=AUDIO_TEMP_DIR,
-            suffix=".wav",
-            delete=False
-        ) as f:
+        # Save the uploaded file
+        with tempfile.NamedTemporaryFile(dir=AUDIO_TEMP_DIR, suffix=".wav", delete=False) as f:
+            file.save(f)
             temp_path = f.name
-            # Convert float audio to int16 PCM
-            scipy.io.wavfile.write(temp_path, fs, (audio_data * 32767).astype(np.int16))
+            print(f"Saved audio to {temp_path}")
 
-            # Transcribe & translate
-            try:
-                model = get_model()
-                result = model.transcribe(temp_path, task="translate", language="zh")
-                english_text = result["text"]
+        # Verify file exists and has content
+        if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
+            return jsonify({"error": "Empty audio file"}), 400
 
-                translator = Translator()
-                thai_translation = translator.translate(english_text, dest='th')
+        # Load model
+        model = get_model()
+        
+        # Transcribe
+        result = model.transcribe(
+            temp_path,
+            task="translate",
+            language="zh",
+            fp16=False  # Important for CPU-only environments
+        )
+        
+        # Verify transcription result
+        if not result.get("text"):
+            return jsonify({"error": "No transcription result"}), 500
 
-                return jsonify({
-                    "english": english_text,
-                    "thai": thai_translation.text
-                })
-            finally:
-                # Clean temp file
-                try:
-                    os.unlink(temp_path)
-                except:
-                    pass
+        # Translate
+        translator = Translator()
+        thai_translation = translator.translate(result["text"], dest='th')
+        
+        return jsonify({
+            "english": result["text"],
+            "thai": thai_translation.text,
+            "status": "success"
+        })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error during transcription: {str(e)}")
+        return jsonify({
+            "error": str(e),
+            "type": type(e).__name__,
+            "details": "Check server logs for more information"
+        }), 500
+
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception as e:
+                print(f"Error cleaning up file: {str(e)}")
 
 @atexit.register
 def cleanup():
@@ -131,5 +100,6 @@ def cleanup():
         except:
             pass
 
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=5000, debug=False)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

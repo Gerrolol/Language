@@ -2,7 +2,6 @@ import { useState } from "react";
 import MicButton from "./components/MicButton";
 
 const App = () => {
-  const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [outputText, setOutputText] = useState("Press start to record...");
   const [translationData, setTranslationData] = useState(null);
@@ -10,59 +9,51 @@ const App = () => {
   const [error, setError] = useState(null);
 
   // Configure API URL based on environment
-  const API_BASE_URL = import.meta.env.PROD 
+  const API_BASE_URL = import.meta.env.PROD
     ? 'https://your-backend-url.com'  // Replace with your deployed backend URL
     : 'http://localhost:5000';
 
-  const handleMicClick = async () => {
-    setError(null); // Reset error state
+  const handleTranscription = async (audioBlob) => {
+  setError(null);
+  setIsProcessing(true);
+  setOutputText("Processing...");
+
+  try {
+    const formData = new FormData();
+    formData.append("audio", audioBlob, "recording.wav");  // Changed filename
+
+    const response = await fetch(`${API_BASE_URL}/transcribe`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
     
-    if (!isRecording && !isProcessing) {
-      // Start recording
-      setIsRecording(true);
-      setOutputText("Recording...");
-      try {
-        const response = await fetch(`${API_BASE_URL}/start`);
-        if (!response.ok) {
-          throw new Error('Failed to start recording');
-        }
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-        setOutputText("Error starting recording");
-        setIsRecording(false);
-      }
-    } else if (isRecording) {
-      // Stop recording and process
-      setIsRecording(false);
-      setIsProcessing(true);
-      setOutputText("Processing...");
-      
-      try {
-        const response = await fetch(`${API_BASE_URL}/stop`);
-        if (!response.ok) {
-          throw new Error('Failed to process recording');
-        }
-        
-        const data = await response.json();
-        
-        // Handle backend errors
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        
-        setTranslationData(data);
-        setOutputText(data.thai); // Show Thai first as requested
-        setShowEnglish(false); // Keep Thai as default view
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-        setOutputText(err.message || "Error processing recording");
-      } finally {
-        setIsProcessing(false);
-      }
+    if (!response.ok || data.error) {
+      throw new Error(data.error || "Unknown server error");
     }
-  };
+
+    if (!data.english || !data.thai) {
+      throw new Error("Invalid response from server");
+    }
+
+    setTranslationData(data);
+    setOutputText(data.thai);
+    setShowEnglish(false);
+    
+  } catch (err) {
+    console.error("Transcription error:", err);
+    setError(err.message || "Processing failed. Please try again.");
+    setOutputText("Error processing audio");
+    
+    // For debugging - remove in production
+    if (err.message.includes("Failed to fetch")) {
+      setError("Could not connect to server. Is the backend running?");
+    }
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const toggleLanguage = () => {
     if (translationData) {
@@ -74,21 +65,19 @@ const App = () => {
   return (
     <div className="app-container">
       <div className="cat-section">
-        {/* Error message display */}
         {error && (
           <div className="error-message">
             {error}
           </div>
         )}
-        
-        {/* Speech bubble and toggle */}
+
         <div className="speech-bubble-container">
           {outputText && (
             <div className="speech-bubble">
               {outputText}
             </div>
           )}
-          {translationData && !isRecording && !isProcessing && (
+          {translationData && !isProcessing && (
             <button 
               onClick={toggleLanguage}
               className="language-toggle"
@@ -97,9 +86,8 @@ const App = () => {
             </button>
           )}
         </div>
-        
-        {/* Mic Button */}
-        <MicButton onClick={handleMicClick} isRecording={isRecording} />
+
+        <MicButton onTranscribe={handleTranscription} />
       </div>
       <h1 className="title">Jennie's translator from Gello 💕</h1>
     </div>
@@ -107,3 +95,4 @@ const App = () => {
 };
 
 export default App;
+
