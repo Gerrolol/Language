@@ -8,7 +8,7 @@ from pathlib import Path
 import atexit
 
 app = Flask(__name__)
-CORS(app, resources={r"/transcribe": {"origins": "https://language-azw3.onrender.com"}}, supports_credentials=True)
+CORS(app)
 
 
 AUDIO_TEMP_DIR = Path(__file__).parent / "audio_temp"
@@ -94,5 +94,5 @@ def cleanup():
             pass
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', port=5000, debug=True)
