@@ -10,7 +10,7 @@ const App = () => {
 
   // Configure API URL based on environment
   const API_BASE_URL = import.meta.env.PROD
-    ? 'https://your-backend-url.com'  // Replace with your deployed backend URL
+    ? 'https://translatethai.onrender.com'  // Replace with your deployed backend URL
     : 'http://localhost:5000';
 
   const handleTranscription = async (audioBlob) => {
